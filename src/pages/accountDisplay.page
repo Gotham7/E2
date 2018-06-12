@@ -1,8 +1,0 @@
-<apex:page standardController="Account" sidebar="false" showHeader="false">
-<apex:detail />
-<apex:relatedList list="Cases" />
-<apex:outputField value="{!account.Name}"/>
-<apex:outputField value="{!account.Owner.Name}"/>
-<p>Hello {! $User.FirstName}!</p>
-<p>You are viewing the {! account.name} account.</p>
-</apex:page>

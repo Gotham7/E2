@@ -1,5 +1,0 @@
-<apex:page >
-<p>Test Before</p>
-<apex:include pageName="Hello2"/>
-<p>Test After</p>
-</apex:page>
