@@ -1,5 +1,5 @@
-# Palo Alto Networks Specific
-build_QA.properties
+# Specific
+build_full3.properties
 build.properties
 build.xml
 deploy/
