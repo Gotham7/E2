@@ -1,0 +1,222 @@
+<project name="Force" default="sf_push_validate" basedir="." xmlns:sf="antlib:com.salesforce" 
+    xmlns:ff="antlib:com.spaceheroes" xmlns:if="ant:if" xmlns:unless="ant:unless">
+    <taskdef resource="antlib.xml" uri="antlib:com.spaceheroes" />
+    <property file="local.properties"/>
+    <property file="build_full3.properties"/>
+
+    <property name="deploy.serverurl" value="https://test.salesforce.com" />
+    <property name="deploy.dir" value="deploy"/>
+    <property name="src.dir" value="src"/>
+    <property name="ignore.dir" value="_ignore"/>
+    <!--<property name="invoke.flows.logic" value="false"/>-->
+
+    <tstamp>
+        <format property="TODAY"
+            pattern="dd-MMMM-yyyy"
+            locale="en,US"/>
+    </tstamp>
+
+    <target name="deactivateFlows">
+        <echo message="Deactivating flows" />
+
+        <delete dir="temp"/>
+
+        <!-- Retrieve all the existing flows from the target org -->
+
+        <ff:createFlowRetrieveManifest 
+            destinationPath="temp/existing" />
+
+        <sf:retrieve 
+            username="${deploy.username}" 
+            password="${deploy.password}" 
+            serverurl="${deploy.serverurl}" 
+            retrieveTarget="temp/existing" 
+            unpackaged="temp/existing/package.xml"/>
+
+        <!-- ForceFlow can then create an ad-hoc package to inactivate all the flows.
+             such package can be deployed using the Force.com migration tool -->
+
+       <delete>
+            <fileset dir="temp/existing" excludesfile="${ignore.dir}\include.txt"/>
+       </delete>
+
+       <ff:createFlowInactivateManifest 
+            sourcePath="temp/existing"  
+            destinationPath="temp/inactivation" />
+
+        <sf:deploy 
+            username="${deploy.username}" 
+            password="${deploy.password}" 
+            serverurl="${deploy.serverurl}" 
+            deployRoot="temp/inactivation" />
+
+        <delete dir="temp"/>
+    </target>
+
+    <target name="deleteFlows" depends="deactivateFlows" if="${invoke.flows.logic}">
+
+        <echo message="Deleting Flows" />
+        <delete dir="temp"/>
+
+        <!-- Retrieve all the existing flows from the target org -->
+        <echo message="Retrieving assets to delete" />
+        <ff:createFlowRetrieveManifest destinationPath="temp/existing" />
+        <sf:retrieve 
+            username="${deploy.username}" 
+            password="${deploy.password}" 
+            serverurl="${deploy.serverurl}" 
+            retrieveTarget="temp/existing" 
+            unpackaged="temp/existing/package.xml" />
+
+        <delete>
+            <fileset dir="temp/existing" excludesfile="${ignore.dir}\include.txt"/>
+       </delete>
+
+        <!-- ForceFlow can then create an ad-hoc destructiveChanges to delete all the flows.
+             such destructive package can be deployed using the Force.com migration tool -->
+
+        <ff:createFlowDeleteManifest 
+            sourcePath="temp/existing" 
+            destinationPath="temp/delete" />
+
+        <sf:deploy 
+            username="${deploy.username}" 
+            password="${deploy.password}" 
+            serverurl="${deploy.serverurl}" 
+            deployRoot="temp/delete" 
+            ignoreWarnings="true" />
+
+            <delete dir="temp"/>
+    </target>
+    <target name="deactivateAndDeleteFlows" if="${invoke.flows.logic}">
+        <echo message="Deactivating flows" />
+
+        <delete dir="temp"/>
+
+        <!-- Retrieve all the existing flows from the target org -->
+
+        <ff:createFlowRetrieveManifest 
+            destinationPath="temp/existing" />
+
+        <sf:retrieve 
+            username="${deploy.username}" 
+            password="${deploy.password}" 
+            serverurl="${deploy.serverurl}" 
+            retrieveTarget="temp/existing" 
+            unpackaged="temp/existing/package.xml"/>
+
+        <!-- ForceFlow can then create an ad-hoc package to inactivate all the flows.
+             such package can be deployed using the Force.com migration tool -->
+
+       <delete>
+            <fileset dir="temp/existing" excludesfile="${ignore.dir}\include.txt"/>
+       </delete>
+
+       <ff:createFlowInactivateManifest 
+            sourcePath="temp/existing"  
+            destinationPath="temp/inactivation" />
+
+        <sf:deploy 
+            username="${deploy.username}" 
+            password="${deploy.password}" 
+            serverurl="${deploy.serverurl}" 
+            deployRoot="temp/inactivation" />
+
+        <delete dir="temp"/>
+        <echo message="Deleting Flows" />
+        <delete dir="temp"/>
+
+        <!-- Retrieve all the existing flows from the target org -->
+        <echo message="Retrieving assets to delete" />
+        <ff:createFlowRetrieveManifest destinationPath="temp/existing" />
+        <sf:retrieve 
+            username="${deploy.username}" 
+            password="${deploy.password}" 
+            serverurl="${deploy.serverurl}" 
+            retrieveTarget="temp/existing" 
+            unpackaged="temp/existing/package.xml" />
+
+        <delete>
+            <fileset dir="temp/existing" excludesfile="${ignore.dir}\include.txt"/>
+       </delete>
+
+        <!-- ForceFlow can then create an ad-hoc destructiveChanges to delete all the flows.
+             such destructive package can be deployed using the Force.com migration tool -->
+
+        <ff:createFlowDeleteManifest 
+            sourcePath="temp/existing" 
+            destinationPath="temp/delete" />
+
+        <sf:deploy 
+            username="${deploy.username}" 
+            password="${deploy.password}" 
+            serverurl="${deploy.serverurl}" 
+            deployRoot="temp/delete" 
+            ignoreWarnings="true" />
+
+            <delete dir="temp"/>
+    </target>
+
+    <target name="prepare">
+
+        <echo message="delete deploy directory"/>
+        <delete dir="${deploy.dir}"/>
+
+        <echo message="copy configuration files from ${ignore.dir} to src"/>
+        <echo message="${user.dir}"/>
+
+        <copy todir="${src.dir}" overwrite="true">
+            <fileset dir="${ignore.dir}">
+                <include name="package.xml" />
+                <include name="include.txt" />
+            </fileset>
+        </copy>
+
+        <echo message="filter files"/>
+        <copy todir="${deploy.dir}">
+            <fileset dir="${src.dir}" includesfile="${src.dir}\include.txt"/>
+        </copy>
+
+        <echo message="removing temp ignore.txt"/>
+        <delete file="${src.dir}\include.txt" />
+        <echo message="Checking if flows logic is needed" />
+        <loadfile property="inclfile" srcFile="${ignore.dir}\include.txt" />
+        <echo message="${inclfile}" />
+        <condition property="invoke.flows.logic" value="true" else="false">
+            <matches string="${inclfile}" pattern="^flows" multiline="true"/>
+        </condition>
+        
+        <echo message="Flows logic is needed = ${invoke.flows.logic}" />
+
+    </target>
+
+    <target name="sf_push_validate" depends="prepare">
+        <antcall target="deactivateAndDeleteFlows" />
+        <echo message="Pushing assets into ${deploy.serverurl}"/>
+        <sf:deploy username="${deploy.username}" password="${deploy.password}" serverurl="${deploy.serverurl}" deployRoot="${deploy.dir}" checkOnly="true">
+        </sf:deploy>
+        <echo message="Push complete"/>
+    </target>
+
+    <target name="sf_push" depends="prepare">
+        <antcall target="deactivateAndDeleteFlows" />
+        <echo message="Pushing assets into ${deploy.serverurl}"/>
+        <sf:deploy username="${deploy.username}" password="${deploy.password}" serverurl="${deploy.serverurl}" deployRoot="${deploy.dir}" checkOnly="false">
+        </sf:deploy>
+        <echo message="Push complete"/>
+    </target>
+
+    <target name="sf_retrieve">
+        <echo message="Retrieving assets from ${deploy.serverurl}" />
+        <echo message="source" />
+        <sf:retrieve username="${deploy.username}" password="${deploy.password}" serverurl="${deploy.serverurl}" retrieveTarget="source" unpackaged="package.xml" />
+    </target>
+
+     <target name="sf_run_local_tests" depends="prepare">
+        <echo message="Testing validation into ${deploy.serverurl}"/>
+        <sf:deploy username="${deploy.username}" password="${deploy.password}" serverurl="${deploy.serverurl}" deployRoot="${deploy.dir}" checkOnly="true" testLevel="RunLocalTests" pollWaitMillis="100000" maxPoll="1000" >
+        </sf:deploy>
+        <echo message="Push complete"/>
+    </target>
+
+</project>

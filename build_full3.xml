@@ -1,0 +1,61 @@
+<project name="Force" default="sf_push_validate" basedir="." xmlns:sf="antlib:com.salesforce">
+
+    <property file="local.properties"/>
+    <property file="build_full3.properties"/>
+
+    <property name="deploy.serverurl" value="https://test.salesforce.com" />
+    <property name="deploy.dir" value="deploy"/>
+    <property name="src.dir" value="src"/>
+    <property name="ignore.dir" value="_ignore"/>
+
+    <tstamp>
+        <format property="TODAY"
+            pattern="dd-MMMM-yyyy"
+            locale="en,US"/>
+    </tstamp>
+    <target name="prepare">
+
+        <echo message="delete deploy directory"/>
+        <delete dir="${deploy.dir}"/>
+
+        <echo message="copy configuration files from ${ignore.dir} to src"/>
+        <echo message="${user.dir}"/>
+
+        <copy todir="${src.dir}" overwrite="true">
+            <fileset dir="${ignore.dir}">
+                <include name="package.xml" />
+                <include name="include.txt" />
+            </fileset>
+        </copy>
+
+        <echo message="filter files"/>
+        <copy todir="${deploy.dir}">
+            <fileset dir="${src.dir}" includesfile="${src.dir}\include.txt"/>
+        </copy>
+
+        <echo message="removing temp ignore.txt"/>
+        <delete file="${src.dir}\include.txt" />
+
+    </target>
+
+    <target name="sf_push_validate" depends="prepare">
+        <echo message="Pushing assets into ${deploy.serverurl}"/>
+        <sf:deploy username="${deploy.username}" password="${deploy.password}" serverurl="${deploy.serverurl}" deployRoot="${deploy.dir}" checkOnly="true">
+         </sf:deploy>
+        <echo message="Push complete"/>
+    </target>
+
+    <target name="sf_push" depends="prepare">
+        <echo message="Pushing assets into ${deploy.serverurl}"/>
+        <sf:deploy username="${deploy.username}" password="${deploy.password}" serverurl="${deploy.serverurl}" deployRoot="${deploy.dir}" checkOnly="false">
+        </sf:deploy>
+        <echo message="Push complete"/>
+    </target>
+
+    <target name="sf_retrieve">
+        <echo message="Retrieving assets from ${deploy.serverurl}" />
+        <echo message="source" />
+        <sf:retrieve username="${deploy.username}" password="${deploy.password}" serverurl="${deploy.serverurl}" retrieveTarget="source" unpackaged="source/package.xml" />
+    </target>
+
+</project>

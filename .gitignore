@@ -1,0 +1,45 @@
+# Palo Alto Networks Specific
+build_QA.properties
+build.properties
+build.xml
+deploy/
+src/include.txt
+
+# Sublime Specific
+config/
+*.sublime-project
+*.sublime-workspace
+*.sublime-settings
+mm.log
+
+# Apex Log as optional
+apex-scripts/log
+
+# Project Settings and MetaData
+.project
+.settings/
+.metadata
+config
+
+# Eclipse specific 
+salesforce.schema
+Referenced Packages
+bin/
+tmp/
+config/
+*.tmp
+*.bak 
+local.properties
+.settings
+.loadpath
+.classpath
+*.cache
+
+# OSX-specific exclusions
+.[dD][sS]_[sS]tore
+
+#Others
+*.sfuo
+TestCache.xml
+TestsResultsCache.xml
+package.xml
