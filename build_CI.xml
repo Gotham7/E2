@@ -4,7 +4,7 @@
     <property file="local.properties"/>
     <property file="build_full3.properties"/>
 
-    <property name="deploy.serverurl" value="https://test.salesforce.com" />
+    <property name="deploy.serverurl" value="https://login.salesforce.com" />
     <property name="deploy.dir" value="deploy"/>
     <property name="src.dir" value="src"/>
     <property name="ignore.dir" value="_ignore"/>
