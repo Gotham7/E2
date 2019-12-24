@@ -7,6 +7,7 @@ System.debug('Price before inserting new book: ' + b.Price__c);
 insert b;
 // Retrieve the new book
   // Test build flow
+//Test git commit
 b = [SELECT Price__c FROM Book__c WHERE Id =:b.Id];
 System.debug('Price after trigger fired: ' + b.Price__c);
 // Test that the trigger correctly updated the price
